@@ -1,0 +1,100 @@
+<!doctype html>
+
+<html>
+<head>
+<style>
+#myCanvas {
+    margin: 0;
+    border: 0;
+    padding: 0;
+}
+label {
+	color: white;"
+}
+body { 
+    margin: 0;
+    width: 100%;
+    overflow:hidden;
+}
+
+</style>
+</head>
+
+<body onload = 'load()'>
+
+<div id="menuStrip" style="background-color:Black;">
+	<button type="button" id="move" onclick="move()">Move</button>
+	<button type="button" id="finishN" onclick="finishN()">Finish inputted number of games</button>
+	<input type="text" id="Number Label" value=1 size="10">
+</div>
+
+<canvas id="myCanvas"></canvas>
+
+<script src="src/MyLibraries/MyAlgs.js"></script>
+<script src="src/MyLibraries/MyMath.js"></script>
+<script src="src/MyLibraries/Images.js"></script>
+<script src="src/MyLibraries/SortedLinkedList.js"></script>
+<script src="src/MyLibraries/MyFileReader.js"></script>
+
+<script src="src/GameEngine/DebugToggle.js"></script>
+<script src="src/GameEngine/Timer.js"></script>
+<script src="src/GameEngine/MoveZoomCamera.js"></script>
+<script src="src/GameEngine/World.js"></script>
+<script src="src/GameEngine/WorldView.js"></script>
+
+
+<script src="src/GameEngine/DragManager.js" ></script>
+<script src="src/GameEngine/TestWorldObjects/DisplayUpdaterObject.js" ></script>
+
+<script src="src/Solitaire/SolitaireWorld.js" ></script>
+<script src="src/Solitaire/Background.js" ></script>
+<script src="src/Solitaire/CardObject.js" ></script>
+<script src="src/Solitaire/Card.js" ></script>
+<script src="src/Solitaire/GameLogic.js" ></script>
+<script src="src/Solitaire/GameDisplayObject.js" ></script>
+<script src="src/Solitaire/AI1.js" ></script>
+
+
+
+
+
+<script type="text/javascript">
+"use strict";
+//checked="checked"
+	var worldView;
+
+	function load(){
+		var canvas = document.getElementById("myCanvas");
+		var ctx = canvas.getContext("2d");
+
+		var rect = document.getElementById("menuStrip").getBoundingClientRect();//absolute position //for if there are menus above
+		canvas.height = window.innerHeight-(rect.bottom-rect.top);//set the height to fill the rest of the screen after 
+
+		canvas.width  = window.innerWidth;//don't use css to set width and height to 100 %. this causes the width and height to be inaccuate
+		
+  		worldView = new WorldView(ctx);//negative value for y zoom to make y axis point up instead of down
+  		let world = new SolitaireWorld();
+  		worldView.world = world;
+	}
+
+	function move(){
+		worldView.world.gameDisplayObject.advance();
+		worldView.redraw();
+	}
+
+	function finishN(){
+		let number = document.getElementById("Number Label").value;
+		number = Number(number);
+		
+		for(let i=0;i<number;i++){
+			worldView.world.gameDisplayObject.advanceToGameFinish();
+		}
+
+		worldView.redraw();
+	}
+	
+</script>
+
+</body>
+
+</html>
