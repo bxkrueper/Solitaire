@@ -23,9 +23,13 @@ class Background{
 
 		ctx.strokeStyle = "black";
 		ctx.lineWidth = 3;
+		//up stacks
 		for(let i=0;i<4;i++){
 			ctx.strokeRect(GameDisplayObject.upStackXs[i], GameDisplayObject.upStackY, CardObject.cardWidth, CardObject.cardHeight);
 		}
+
+		//hand
+		ctx.strokeRect(GameDisplayObject.handTurnedX, GameDisplayObject.handY, CardObject.cardWidth, CardObject.cardHeight);
 	}
 
 	toString(){

@@ -161,7 +161,7 @@ class World{
 			worldObject.doOnAdd();
 		}
 
-		console.log(worldObject.toString() + " added");
+		// console.log(worldObject.toString() + " added");
 	}
 	addAfterFinishedWithMethod(worldObject,methodName){//after the next time list has been run through
 		if(this._eventMap[methodName]==null){
@@ -195,7 +195,7 @@ class World{
 
 		this.deRegisterName(this._getNameByObject(worldObject));
 
-		console.log(worldObject.toString() + " deleted");
+		// console.log(worldObject.toString() + " deleted");
 	}
 
 	registerName(name,object){

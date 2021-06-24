@@ -2,7 +2,7 @@
 class GameLogic{
 
 	constructor(){
-		
+		this.setup();
 	}
 
 	getUpStack(index){
@@ -31,6 +31,9 @@ class GameLogic{
 
 		return this._hand[this._handIndex];
 	}
+	get handIndex(){
+		return this._handIndex;
+	}
 	getCardBehindHandCard(){//card behind card showing on turned up pile. May return null.
 		if(this._handIndex<1){
 			return null;
@@ -53,10 +56,13 @@ class GameLogic{
 	getActionsSinceHandReset(){
 		return this._actionsSinceHandReset;
 	}
+	getTimesHandTurnedOver(){
+		return this._timesHandTurnedOver;
+	}
 	isWinState(){
 		return this.getLowestUpValue()===13;
 	}
-
+	
 	setup(){
 		//make main structures
 		this._upStacks = [[],[],[],[]];//arrays inside: 0 is bottom of stack
@@ -66,6 +72,7 @@ class GameLogic{
 		this._handIndex = -1;
 		this._lowestUpValue = 0;//maintained when card is put up
 		this._actionsSinceHandReset = 0;
+		this._timesHandTurnedOver = 0;
 
 		//generate random ids
 		let idArray = [];//card id: 0 is ace of hearts, 1 is two of hearts, ect order is hearts,diamonds,spades,clubs
@@ -113,12 +120,6 @@ class GameLogic{
 		// console.log('stack to stack: ' + this.checkStackToStack()?.from + ' ' + + this.checkStackToStack()?.to);
 		// console.log('stack to up: ' + this.checkStackToUp()?.from + ' ' + + this.checkStackToUp()?.to);
 	}
-
-	score(){
-
-	}
-
-
 
 	getCardsInHandFaceDown(){
 		return this._hand.length-this._handIndex-1;
@@ -177,14 +178,44 @@ class GameLogic{
 
 
 	//returns index of stack to reveal or -1
-	//parameter optional, if index==null then check all of the stacks
-	checkReadyToReveal(index){
-		if(index!=null){
-			return this.getMainStack(index).length===0 && this.getUnderMainStack(index).length>0;
+	getUnrevealedStackIndex(){
+		for(let index=6;index>=0;index--){
+			if(this.getMainStack(index).length===0 && this.getUnderMainStack(index).length>0){
+				return index;
+			}
+		}
+		return -1;
+	}
+
+	//returns true if move is legal. False if not
+	/////todo: fromWithinStackIndex
+	checkMove(fromPosition,fromStackIndex,fromWithinStackIndex,toPosition,toStackIndex){
+		let card;
+		if(fromPosition==='hand'){
+			card=this.getHandCard();
+		}else if(fromPosition==='main'){
+			card=this.getMainStack(fromStackIndex)[fromWithinStackIndex];
 		}
 
-		////check all of them and return index
+		if(fromPosition==='hand' && toPosition==='main'){
+			return this._cardCanGoToStack(card,toStackIndex);
+		}
+		if(fromPosition==='hand' && toPosition==='up'){
+			return this._cardCanGoUpIndex(card,toStackIndex);
+		}
+		if(fromPosition==='main' && toPosition==='main'){
+			return this._cardCanGoToStack(card,toStackIndex);
+		}
+		if(fromPosition==='main' && toPosition==='up'){
+			if(fromWithinStackIndex!=this.getMainStack(fromStackIndex).length-1){//if the card is not the top of the stack, disqualify it
+				return false;
+			}
+			return this._cardCanGoUpIndex(card,toStackIndex);
+		}
+
+		return false;
 	}
+
 
 	//returns{from:#,to:#} or null
 	checkStackToStack(){
@@ -210,7 +241,7 @@ class GameLogic{
 
 		return null;
 	}
-		//support method. returns bool
+		//support method. returns bool  //to main stack
 		_cardCanGoToStack(card,stackID){
 			let toTopCard = this.getTopCardOnMainStack(stackID);
 			if(toTopCard==null){
@@ -265,9 +296,18 @@ class GameLogic{
 
 			return -1;
 		}
+		_cardCanGoUpIndex(card,upIndex){
+			let toStack = this._upStacks[upIndex];
+			if(toStack.length===0){
+				return card.char==='A';
+			}
+
+			let toTopCard = toStack[toStack.length-1];
+			return card.value-1===toTopCard.value && card.suitId === toTopCard.suitId;
+		}
 	//returns{from:#,to:#} or null
 	//only checks current card
-	checkHandCardToStack(){
+	checkHandCardToMain(){
 		let handCard = this.getHandCard();
 		if(handCard==null)
 			return null;
@@ -301,6 +341,7 @@ class GameLogic{
 				card.turnFaceDown();
 			});
 			this._actionsSinceHandReset = 0;
+			this._timesHandTurnedOver++;
 			return true;
 		}
 
@@ -333,8 +374,30 @@ class GameLogic{
 		card.turnFaceUp();
 	}
 
+
+	//assumes it has already been checked
+	applyMove(fromPosition,fromStackIndex,fromWithinStackIndex,toPosition,toStackIndex){
+		if(fromPosition==='hand' && toPosition==='main'){
+			this.moveFromHandToMain(toStackIndex);
+			return;
+		}
+		if(fromPosition==='hand' && toPosition==='up'){
+			this.moveFromHandToUp(toStackIndex);
+			return;
+		}
+		if(fromPosition==='main' && toPosition==='main'){
+			this.moveFromStackToStack(fromStackIndex,fromWithinStackIndex,toStackIndex);
+			return;
+		}
+		if(fromPosition==='main' && toPosition==='up'){
+			this.moveFromStackToUp(fromStackIndex,toStackIndex);
+			return;
+		}
+	}
+
+
 	//validity assumed to have been already checked
-	moveFromHandToStack(stackIndex){
+	moveFromHandToMain(stackIndex){
 		let handCard = this.getHandCard();
 		let stack = this.getMainStack(stackIndex);
 
@@ -357,12 +420,13 @@ class GameLogic{
 		this._actionsSinceHandReset++;
 	}
 	//validity assumed to have been already checked
-	moveFromStackToStack(fromStackIndex,toStackIndex){
+	moveFromStackToStack(fromStackIndex,fromStackWithinIndex,toStackIndex){
 		let fromStack = this.getMainStack(fromStackIndex);
+		let movingStack = fromStack.slice(fromStackWithinIndex);
 		let toStack = this.getMainStack(toStackIndex);
 
-		toStack.push.apply(toStack,fromStack);//append from stack to toStack
-		fromStack.splice(0,fromStack.length);//delete everything from fromStack
+		toStack.push.apply(toStack,movingStack);//append from stack to toStack
+		fromStack.splice(fromStackWithinIndex,fromStack.length);//delete everything from fromStack starting from fromStackWithinIndex
 		this._actionsSinceHandReset++;
 	}
 	//validity assumed to have been already checked

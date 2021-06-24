@@ -22,13 +22,8 @@ class SolitaireWorld extends World{
 		this.redrawAfter('keyInput');
 		// this.redrawAfter('scroll');
 
-		this.newGame();
-	}
 
-	newGame(){
 		this.gameLogic = new GameLogic();
-		this.gameLogic.setup();
-
 		this.gameDisplayObject = new GameDisplayObject(this.gameLogic);
 		this.add(this.gameDisplayObject);
 	}
@@ -43,7 +38,8 @@ class SolitaireWorld extends World{
 	_setPriorities(){
 		this.priorities['Background'] = -10;
 		this.priorities['FakeCards'] = -5;
-		this.priorities['CardObject'] = 0;
+		this.priorities['CardObject'] = 0;//0 is for cards at the bottom of the stack. +1 for every card that is below it
+		//20 is added temporarily while they are being draged so the max a card will have is 12+20=32
 	}
 	
 }

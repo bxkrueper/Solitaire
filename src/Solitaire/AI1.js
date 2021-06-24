@@ -3,17 +3,72 @@
 class AI1{
 	constructor(gameLogic){
 		this.gameLogic = gameLogic;
-		this.stackIdToReveal = -1;//reminder to prioritize revealing the stack on the next turn
 		this.movesInLastHandReset = 1;//set to a non-zero value initially
 	}
 
 	reset(){
-		this.stackIdToReveal = -1;
 		this.movesInLastHandReset = 1;//set to a non-zero value initially
 	}
 
+	//GameDisplayObject will call this to tell the AI about any tampering with its game
+	//allows alternating between manual play and AI
+	manualMoveMade(){
+		this.movesInLastHandReset++;
+	}
+
+	//this is the AI's main method. Calling this once should result in one move
+	//returns null normally, but returns 'l' if it realized it lost
+	advance(){
+		let unrevealedStackIndex = this.gameLogic.getUnrevealedStackIndex();
+		if(unrevealedStackIndex>=0){
+			this.gameLogic.reveal(unrevealedStackIndex);
+			return;
+		}
+
+		if(this._tryNoRiskPutUp()){
+			return;
+		}
+
+		let move = this.gameLogic.checkStackToStack();
+		if(move!=null){
+			this.gameLogic.moveFromStackToStack(move.from,0,move.to);
+			return;
+		}
+
+		move = this.gameLogic.checkHandCardToMain();
+		if(move!=null){
+			this.gameLogic.moveFromHandToMain(move.to);
+			return;
+		}
+
+		move = this.gameLogic.checkStackToUp();
+		if(move!=null){
+			this.gameLogic.moveFromStackToUp(move.from,move.to);
+			return;
+		}
+
+		move = this.gameLogic.checkHandCardToUp();
+		if(move!=null){
+			this.gameLogic.moveFromHandToUp(move.to);
+			return;
+		}
+
+
+
+		let movesInThisHandReset = this.gameLogic.getActionsSinceHandReset();
+		let handReset = this.gameLogic.turnHand();//turn hand and record if it reset
+		if(handReset){
+			if(this.movesInLastHandReset===0 && movesInThisHandReset===0){
+				return 'l';//lost
+			}
+
+			this.movesInLastHandReset = movesInThisHandReset;
+		}
+	}
+
+
 	//returns true if it put something up
-	tryNoRiskPutUp(){
+	_tryNoRiskPutUp(){
 		const lowestValueToPutUp = this.gameLogic.getLowestUpValue()+2;
 		
 		//check hand
@@ -38,69 +93,11 @@ class AI1{
 				let upIndex = this.gameLogic.cardCanGoUp(card);
 				if(upIndex>=0){
 					this.gameLogic.moveFromStackToUp(stackIndex,upIndex);
-					if(this.gameLogic.getUnderMainStack(stackIndex).length>0){
-						this.stackIdToReveal = stackIndex;
-					}
 					return true;
 				}
 			}
 		}
 
 		return false;
-	}
-
-	//returns null normally, but returns 'l' if it realized it lost
-	advance(){
-		if(this.stackIdToReveal>=0){
-			this.gameLogic.reveal(this.stackIdToReveal);
-			this.stackIdToReveal = -1;
-			return;
-		}
-
-		if(this.tryNoRiskPutUp()){
-			return;
-		}
-
-		let move = this.gameLogic.checkStackToStack();
-		if(move!=null){
-			this.gameLogic.moveFromStackToStack(move.from,move.to);
-			if(this.gameLogic.getUnderMainStack(move.from).length>0){
-				this.stackIdToReveal = move.from;
-			}
-			return;
-		}
-
-		move = this.gameLogic.checkHandCardToStack();
-		if(move!=null){
-			this.gameLogic.moveFromHandToStack(move.to);
-			return;
-		}
-
-		move = this.gameLogic.checkStackToUp();
-		if(move!=null){
-			this.gameLogic.moveFromStackToUp(move.from,move.to);
-			if(this.gameLogic.getMainStack(move.from).length===0 && this.gameLogic.getUnderMainStack(move.from).length>0){
-				this.stackIdToReveal = move.from;
-			}
-			return;
-		}
-
-		move = this.gameLogic.checkHandCardToUp();
-		if(move!=null){
-			this.gameLogic.moveFromHandToUp(move.to);
-			return;
-		}
-
-
-
-		let movesInThisHandReset = this.gameLogic.getActionsSinceHandReset();
-		let handReset = this.gameLogic.turnHand();//turn hand and record if it reset
-		if(handReset){
-			if(this.movesInLastHandReset===0 && movesInThisHandReset===0){
-				return 'l';//lost
-			}
-
-			this.movesInLastHandReset = movesInThisHandReset;
-		}
 	}
 }

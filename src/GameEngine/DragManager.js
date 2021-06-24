@@ -1,16 +1,19 @@
 "use strict";
 //example usage: put in doOnAdd
-// this._dragManager = new DragManager('left',this,'currentXWorld','currentYWorld',this.containsPoint,'world');
+// this._dragManager = new DragManager('left',this,'currentXWorld','currentYWorld',this.containsPoint,'world',this.doOnDragedFunction,this.doOnDropedFunction);
 // this._dragManager.addDragLogic(this.priority);
 class DragManager{
 
-	constructor(mouseButton,clientObject,xVarName,yVarName,containsPointFunction,type = 'world'){
+	constructor(mouseButton,clientObject,xVarName,yVarName,containsPointFunction,type = 'world',doOnPickedUpFunction,doOnDragedFunction,doOnDropedFunction){
 		this._mouseButton = mouseButton;
 		this._clientObject = clientObject;
 		this.xVarName = xVarName;
 		this.yVarName = yVarName;
 		this._containsPointFunction = containsPointFunction;
 		this._type = type;
+		this._doOnPickedUpFunction = doOnPickedUpFunction;
+		this._doOnDragedFunction = doOnDragedFunction;
+		this._doOnDropedFunction = doOnDropedFunction;
 
 		this._xOnTarget;//client's position on target time
 		this._yOnTarget;
@@ -32,6 +35,10 @@ class DragManager{
 	}
 	get dragging(){
 		return this._dragging;
+	}
+
+	changeTargetDetectPriority(priority){
+		this._clientObject.world.changePriority(this._clientObject,'acceptMouseTarget',this._acceptMouseTarget,this.priority);
 	}
 
 	
@@ -58,9 +65,6 @@ class DragManager{
 			console.log('drag logic not added to ' + this._clientObject + ' nothing done');
 			return;
 		}
-		// delete this._clientObject._xOnTarget;///////////keep in this object instead of giving to client
-		// delete this._clientObject._yOnTarget;
-		// delete this._clientObject._dragging;
 
 		this._clientObject.world.removeEventListener(this._clientObject,'mouseButtonDown',this._mouseButtonDown);
 		this._clientObject.world.removeEventListener(this._clientObject,'acceptMouseTarget',this._acceptMouseTarget);//////priority
@@ -78,11 +82,13 @@ class DragManager{
 		let xVarName = this.xVarName;
 		let yVarName = this.yVarName;
 		let self = this;
+		let doOnPickedUpFunction = this._doOnPickedUpFunction;
 		return function(buttonType){
 			if(this.world.currentTarget == this && buttonType==mouseButton){
 				self._xOnTarget = clientObject[xVarName];
 				self._yOnTarget = clientObject[yVarName];
 				self._dragging = true;
+				doOnPickedUpFunction?.call(clientObject);
 			}
 		};
 	}
@@ -106,6 +112,7 @@ class DragManager{
 		let xVarName = this.xVarName;
 		let yVarName = this.yVarName;
 		let clientObject = this._clientObject;
+		let doOnDragedFunction = this._doOnDragedFunction;
 		let self = this;
 		if(this._type == 'world'){
 			return function(){
@@ -113,6 +120,7 @@ class DragManager{
 					//drag
 					clientObject[xVarName] = self._xOnTarget+this.world.worldView.currentXWorld-this.world.worldView.previousXWorld;
 					clientObject[yVarName] = self._yOnTarget+this.world.worldView.currentYWorld-this.world.worldView.previousYWorld;
+					doOnDragedFunction?.call(clientObject);
 				}
 			};
 		}else{//'screen'
@@ -121,6 +129,7 @@ class DragManager{
 					//drag
 					clientObject[xVarName] = self._xOnTarget+this.world.worldView.currentXScreen-this.world.worldView.previousXScreen;
 					clientObject[yVarName] = self._yOnTarget+this.world.worldView.currentYScreen-this.world.worldView.previousYScreen;
+					doOnDragedFunction?.call(clientObject);
 				}
 			};
 		}
@@ -128,9 +137,15 @@ class DragManager{
 	}
 
 	get_mouseButtonUp(){
+		let doOnDropedFunction = this._doOnDropedFunction;
 		let self = this;
+		let clientObject = this._clientObject;
 		return function(){
-			self._dragging = false;
+			if(self._dragging){
+				doOnDropedFunction?.call(clientObject);
+				self._dragging = false;
+			}
+			
 		};
 	}
 
