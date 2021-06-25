@@ -1,6 +1,6 @@
 "use strict";
 //example usage: put in doOnAdd
-// this._dragManager = new DragManager('left',this,'currentXWorld','currentYWorld',this.containsPoint,'world',this.doOnDragedFunction,this.doOnDropedFunction);
+// this._dragManager = new DragManager('left',this,'currentXWorld','currentYWorld',this.containsPoint,'world',this.doOnPickedUpFunction,this.doOnDragedFunction,this.doOnDropedFunction);
 // this._dragManager.addDragLogic(this.priority);
 class DragManager{
 
