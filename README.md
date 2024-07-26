@@ -1,4 +1,6 @@
 # Solitaire
+![image](https://user-images.githubusercontent.com/28366832/196824601-d6d33415-6c97-4ce3-9c8a-e8cf0a43992d.png)
+
 Project goal: find the win rate of Solitaire using a simple algorithm and experiment with some variation.
 
 Background: Solitaire (specifically the version known as Klondike) presents an interesting mathematical puzzle. The probability of a game being winnable has been calculated to be about 82% (source wiki lol), but this assumes a perfect player with complete knowledge of the cards that are turned over. I was unable to find much info about a normal player's win rate with incomplete information of the game. There are also some variations to the rules that would put any numbers I find on the internet questionable to the game we know, so I decided this would be the topic for my next programming project.
