@@ -24,6 +24,7 @@ body {
 
 <div id="menuStrip" style="background-color:Black;">
 	<button type="button" id="move" onclick="move()">Move</button>
+	<button type="button" id="reset" onclick="reset()">Give up and reset</button>
 	<button type="button" id="finishN" onclick="finishN()">Finish inputted number of games</button>
 	<input type="text" id="Number Label" value=1 size="10">
 	<button type="button" id="keyboardShortcuts" onclick="showKeyboardShortcuts()">Show keyboard shortcuts</button>
@@ -80,6 +81,11 @@ body {
 
 	function move(){
 		worldView.world.gameDisplayObject.advance();
+		worldView.redraw();
+	}
+
+	function reset(){
+		worldView.world.gameDisplayObject.keyInput('enter');
 		worldView.redraw();
 	}
 
